@@ -16,10 +16,22 @@ const LandingPage = () => {
   };
 
   const [manualData, setManualData] = useState({
-    starBrightness: 45,
-    transitDuration: 3.2,
-    orbitalPeriod: 24,
-    transitDepth: 1.8,
+    // Planetary and Orbital Parameters
+    k_ror: 0.05,
+    pl_prad_re: 2.0,
+    pl_orbper_days: 10.0,
+    pl_insol_flux: 100.0,
+    pl_depth_ppm: 1000.0,
+    pl_trandur_hrs: 3.0,
+    koi_impact: 0.5,
+    pl_tranmid_bjd: 2455000.0,
+    // Stellar Properties
+    st_teff_k: 5778.0,
+    st_rad_rsun: 1.0,
+    k_srho: 1.4,
+    st_mag_tess: 10.0,
+    // Data Quality and Confidence
+    koi_model_snr: 20.0,
   });
   const [datasetOptions, setDatasetOptions] = useState({
     selectedDataset: "kepler-11",
@@ -49,10 +61,19 @@ const LandingPage = () => {
         ? {
             inputType: "manual",
             parameters: {
-              starBrightness: manualData.starBrightness,
-              transitDuration: manualData.transitDuration,
-              orbitalPeriod: manualData.orbitalPeriod,
-              transitDepth: manualData.transitDepth,
+              k_ror: manualData.k_ror,
+              pl_prad_re: manualData.pl_prad_re,
+              pl_orbper_days: manualData.pl_orbper_days,
+              pl_insol_flux: manualData.pl_insol_flux,
+              pl_depth_ppm: manualData.pl_depth_ppm,
+              pl_trandur_hrs: manualData.pl_trandur_hrs,
+              koi_impact: manualData.koi_impact,
+              pl_tranmid_bjd: manualData.pl_tranmid_bjd,
+              st_teff_k: manualData.st_teff_k,
+              st_rad_rsun: manualData.st_rad_rsun,
+              k_srho: manualData.k_srho,
+              st_mag_tess: manualData.st_mag_tess,
+              koi_model_snr: manualData.koi_model_snr,
             },
           }
         : selectedInputMethod === "dataset"
@@ -230,363 +251,711 @@ const LandingPage = () => {
 
           {/* Manual Data Input Interface */}
           {selectedInputMethod === "manual" && (
-            <div className="bg-slate-800 rounded-lg p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                {/* Star Brightness */}
-                <div>
-                  <label className="block text-sm font-medium mb-3">
-                    Star Brightness
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={manualData.starBrightness}
-                      onChange={(e) =>
-                        handleManualDataChange(
-                          "starBrightness",
-                          parseFloat(e.target.value)
-                        )
-                      }
-                      className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
-                    />
-                    <div className="flex justify-between text-xs text-gray-400 mt-1">
-                      <span>0</span>
-                      <span className="text-blue-400 font-medium">
-                        {manualData.starBrightness}
-                      </span>
-                      <span>100</span>
+            <>
+              <div className="text-center mb-8">
+                <p className="text-gray-400 text-lg">
+                  Use range sliders or input fields to provide values for each
+                  parameter. These parameters will be used by our ML model to
+                  predict the presence of exoplanets. Adjust the values based on
+                  your observational data.
+                </p>
+              </div>
+              <div className="bg-slate-800 rounded-lg p-8">
+                {/* Planetary and Orbital Parameters */}
+                <div className="mb-10">
+                  <h3 className="text-xl font-bold text-blue-400 mb-6 border-b border-slate-700 pb-2">
+                    Planetary and Orbital Parameters
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Radius Ratio */}
+                    <div>
+                      <label className="block text-sm font-medium mb-3">
+                        Radius Ratio (k_ror)
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="0.001"
+                          max="0.2"
+                          step="0.001"
+                          value={manualData.k_ror}
+                          onChange={(e) =>
+                            handleManualDataChange(
+                              "k_ror",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>0.001</span>
+                          <span className="text-blue-400 font-medium">
+                            {manualData.k_ror.toFixed(3)}
+                          </span>
+                          <span>0.2</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Planetary Radius */}
+                    <div>
+                      <label className="block text-sm font-medium mb-3">
+                        Planetary Radius (pl_prad_re) - Earth radii
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="0.1"
+                          max="30"
+                          step="0.1"
+                          value={manualData.pl_prad_re}
+                          onChange={(e) =>
+                            handleManualDataChange(
+                              "pl_prad_re",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>0.1</span>
+                          <span className="text-blue-400 font-medium">
+                            {manualData.pl_prad_re.toFixed(1)} R⊕
+                          </span>
+                          <span>30</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Orbital Period */}
+                    <div>
+                      <label className="block text-sm font-medium mb-3">
+                        Orbital Period (pl_orbper_days) - days
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="0.1"
+                          max="730"
+                          step="0.1"
+                          value={manualData.pl_orbper_days}
+                          onChange={(e) =>
+                            handleManualDataChange(
+                              "pl_orbper_days",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>0.1</span>
+                          <span className="text-blue-400 font-medium">
+                            {manualData.pl_orbper_days.toFixed(1)} days
+                          </span>
+                          <span>730</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Planetary Insolation Flux */}
+                    <div>
+                      <label className="block text-sm font-medium mb-3">
+                        Planetary Insolation Flux (pl_insol_flux)
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="0.1"
+                          max="10000"
+                          step="0.1"
+                          value={manualData.pl_insol_flux}
+                          onChange={(e) =>
+                            handleManualDataChange(
+                              "pl_insol_flux",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>0.1</span>
+                          <span className="text-blue-400 font-medium">
+                            {manualData.pl_insol_flux.toFixed(1)}
+                          </span>
+                          <span>10000</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Transit Depth */}
+                    <div>
+                      <label className="block text-sm font-medium mb-3">
+                        Transit Depth (pl_depth_ppm) - ppm
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="1"
+                          max="50000"
+                          step="1"
+                          value={manualData.pl_depth_ppm}
+                          onChange={(e) =>
+                            handleManualDataChange(
+                              "pl_depth_ppm",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>1</span>
+                          <span className="text-blue-400 font-medium">
+                            {manualData.pl_depth_ppm.toFixed(0)} ppm
+                          </span>
+                          <span>50000</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Transit Duration */}
+                    <div>
+                      <label className="block text-sm font-medium mb-3">
+                        Transit Duration (pl_trandur_hrs) - hours
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="0.1"
+                          max="24"
+                          step="0.1"
+                          value={manualData.pl_trandur_hrs}
+                          onChange={(e) =>
+                            handleManualDataChange(
+                              "pl_trandur_hrs",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>0.1</span>
+                          <span className="text-blue-400 font-medium">
+                            {manualData.pl_trandur_hrs.toFixed(1)} hrs
+                          </span>
+                          <span>24</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Impact Parameter */}
+                    <div>
+                      <label className="block text-sm font-medium mb-3">
+                        Impact Parameter (koi_impact)
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="0"
+                          max="1.5"
+                          step="0.01"
+                          value={manualData.koi_impact}
+                          onChange={(e) =>
+                            handleManualDataChange(
+                              "koi_impact",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>0</span>
+                          <span className="text-blue-400 font-medium">
+                            {manualData.koi_impact.toFixed(2)}
+                          </span>
+                          <span>1.5</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Planetary Transit Midpoint */}
+                    <div>
+                      <label className="block text-sm font-medium mb-3">
+                        Planetary Transit Midpoint (pl_tranmid_bjd) - BJD
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="2454000"
+                          max="2460000"
+                          step="0.1"
+                          value={manualData.pl_tranmid_bjd}
+                          onChange={(e) =>
+                            handleManualDataChange(
+                              "pl_tranmid_bjd",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>2454000</span>
+                          <span className="text-blue-400 font-medium">
+                            {manualData.pl_tranmid_bjd.toFixed(1)}
+                          </span>
+                          <span>2460000</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Transit Duration */}
-                <div>
-                  <label className="block text-sm font-medium mb-3">
-                    Transit Duration (hours)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="range"
-                      min="0.1"
-                      max="24"
-                      step="0.1"
-                      value={manualData.transitDuration}
-                      onChange={(e) =>
-                        handleManualDataChange(
-                          "transitDuration",
-                          parseFloat(e.target.value)
-                        )
-                      }
-                      className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
-                    />
-                    <div className="flex justify-between text-xs text-gray-400 mt-1">
-                      <span>0.1</span>
-                      <span className="text-blue-400 font-medium">
-                        {manualData.transitDuration}h
-                      </span>
-                      <span>24</span>
+                {/* Stellar Properties */}
+                <div className="mb-10">
+                  <h3 className="text-xl font-bold text-purple-400 mb-6 border-b border-slate-700 pb-2">
+                    Stellar Properties
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Stellar Effective Temperature */}
+                    <div>
+                      <label className="block text-sm font-medium mb-3">
+                        Stellar Effective Temperature (st_teff_k) - K
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="2500"
+                          max="10000"
+                          step="10"
+                          value={manualData.st_teff_k}
+                          onChange={(e) =>
+                            handleManualDataChange(
+                              "st_teff_k",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>2500</span>
+                          <span className="text-blue-400 font-medium">
+                            {manualData.st_teff_k.toFixed(0)} K
+                          </span>
+                          <span>10000</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Stellar Radius */}
+                    <div>
+                      <label className="block text-sm font-medium mb-3">
+                        Stellar Radius (st_rad_rsun) - Solar radii
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="0.1"
+                          max="5"
+                          step="0.01"
+                          value={manualData.st_rad_rsun}
+                          onChange={(e) =>
+                            handleManualDataChange(
+                              "st_rad_rsun",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>0.1</span>
+                          <span className="text-blue-400 font-medium">
+                            {manualData.st_rad_rsun.toFixed(2)} R☉
+                          </span>
+                          <span>5</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Stellar Density */}
+                    <div>
+                      <label className="block text-sm font-medium mb-3">
+                        Stellar Density (k_srho) - g/cm³
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="0.01"
+                          max="10"
+                          step="0.01"
+                          value={manualData.k_srho}
+                          onChange={(e) =>
+                            handleManualDataChange(
+                              "k_srho",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>0.01</span>
+                          <span className="text-blue-400 font-medium">
+                            {manualData.k_srho.toFixed(2)} g/cm³
+                          </span>
+                          <span>10</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Stellar Magnitude */}
+                    <div>
+                      <label className="block text-sm font-medium mb-3">
+                        Stellar Magnitude (st_mag_tess) - TESS mag
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="5"
+                          max="20"
+                          step="0.1"
+                          value={manualData.st_mag_tess}
+                          onChange={(e) =>
+                            handleManualDataChange(
+                              "st_mag_tess",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>5</span>
+                          <span className="text-blue-400 font-medium">
+                            {manualData.st_mag_tess.toFixed(1)} mag
+                          </span>
+                          <span>20</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Orbital Period */}
-                <div>
-                  <label className="block text-sm font-medium mb-3">
-                    Orbital Period (days)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="range"
-                      min="0.5"
-                      max="365"
-                      step="0.5"
-                      value={manualData.orbitalPeriod}
-                      onChange={(e) =>
-                        handleManualDataChange(
-                          "orbitalPeriod",
-                          parseFloat(e.target.value)
-                        )
-                      }
-                      className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
-                    />
-                    <div className="flex justify-between text-xs text-gray-400 mt-1">
-                      <span>0.5</span>
-                      <span className="text-blue-400 font-medium">
-                        {manualData.orbitalPeriod} days
-                      </span>
-                      <span>365</span>
+                {/* Data Quality and Confidence */}
+                <div className="mb-8">
+                  <h3 className="text-xl font-bold text-green-400 mb-6 border-b border-slate-700 pb-2">
+                    Data Quality and Confidence
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Model Signal-to-Noise Ratio */}
+                    <div>
+                      <label className="block text-sm font-medium mb-3">
+                        Model Signal-to-Noise Ratio (koi_model_snr)
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="1"
+                          max="500"
+                          step="0.1"
+                          value={manualData.koi_model_snr}
+                          onChange={(e) =>
+                            handleManualDataChange(
+                              "koi_model_snr",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>1</span>
+                          <span className="text-blue-400 font-medium">
+                            {manualData.koi_model_snr.toFixed(1)}
+                          </span>
+                          <span>500</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Transit Depth */}
-                <div>
-                  <label className="block text-sm font-medium mb-3">
-                    Transit Depth (%)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="range"
-                      min="0.01"
-                      max="10"
-                      step="0.01"
-                      value={manualData.transitDepth}
-                      onChange={(e) =>
-                        handleManualDataChange(
-                          "transitDepth",
-                          parseFloat(e.target.value)
-                        )
-                      }
-                      className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
-                    />
-                    <div className="flex justify-between text-xs text-gray-400 mt-1">
-                      <span>0.01</span>
-                      <span className="text-blue-400 font-medium">
-                        {manualData.transitDepth}%
-                      </span>
-                      <span>10</span>
-                    </div>
-                  </div>
+                {/* Analyze Button */}
+                <div className="text-center">
+                  <button
+                    onClick={handleAnalysis}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold transition-colors"
+                  >
+                    Analyze Data
+                  </button>
                 </div>
               </div>
-
-              {/* Analyze Button */}
-              <div className="text-center">
-                <button
-                  onClick={handleAnalysis}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold transition-colors"
-                >
-                  Analyze Data
-                </button>
-              </div>
-            </div>
+            </>
           )}
 
           {/* Existing Dataset Interface */}
           {selectedInputMethod === "dataset" && (
-            <div className="bg-slate-800 rounded-lg p-8">
-              {/* Dataset Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-3">
-                  Select a Dataset
-                </label>
-                <select
-                  value={datasetOptions.selectedDataset}
-                  onChange={(e) =>
-                    handleDatasetChange("selectedDataset", e.target.value)
-                  }
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                >
-                  {availableDatasets.map((dataset) => (
-                    <option key={dataset.value} value={dataset.value}>
-                      {dataset.label}
-                    </option>
-                  ))}
-                </select>
+            <>
+              <div className="text-center mb-8">
+                <p className="text-gray-400 text-lg">
+                  Run our model on existing datasets (KOI, TOI, etc.). You will
+                  get ideas about how well our model is working on different
+                  existing datasets.
+                </p>
               </div>
-
-              {/* Search Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                {/* Search by Name */}
-                <div>
+              <div className="bg-slate-800 rounded-lg p-8">
+                {/* Dataset Selection */}
+                <div className="mb-6">
                   <label className="block text-sm font-medium mb-3">
-                    Search by Name
+                    Select a Dataset
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg
-                        className="h-5 w-5 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
-                      </svg>
+                  <select
+                    value={datasetOptions.selectedDataset}
+                    onChange={(e) =>
+                      handleDatasetChange("selectedDataset", e.target.value)
+                    }
+                    className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                  >
+                    {availableDatasets.map((dataset) => (
+                      <option key={dataset.value} value={dataset.value}>
+                        {dataset.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Search Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  {/* Search by Name */}
+                  <div>
+                    <label className="block text-sm font-medium mb-3">
+                      Search by Name
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg
+                          className="h-5 w-5 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                          />
+                        </svg>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="e.g. Kepler-11b"
+                        value={datasetOptions.searchByName}
+                        onChange={(e) =>
+                          handleDatasetChange("searchByName", e.target.value)
+                        }
+                        className="w-full bg-slate-700 border border-slate-600 rounded-lg pl-10 pr-4 py-3 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+                      />
                     </div>
-                    <input
-                      type="text"
-                      placeholder="e.g. Kepler-11b"
-                      value={datasetOptions.searchByName}
-                      onChange={(e) =>
-                        handleDatasetChange("searchByName", e.target.value)
-                      }
-                      className="w-full bg-slate-700 border border-slate-600 rounded-lg pl-10 pr-4 py-3 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-                    />
+                  </div>
+
+                  {/* Search by Discovery Date */}
+                  <div>
+                    <label className="block text-sm font-medium mb-3">
+                      Search by Discovery Date
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg
+                          className="h-5 w-5 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </div>
+                      <input
+                        type="date"
+                        value={datasetOptions.searchByDate}
+                        onChange={(e) =>
+                          handleDatasetChange("searchByDate", e.target.value)
+                        }
+                        className="w-full bg-slate-700 border border-slate-600 rounded-lg pl-10 pr-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* Search by Discovery Date */}
-                <div>
+                {/* Filter Options */}
+                <div className="mb-8">
                   <label className="block text-sm font-medium mb-3">
-                    Search by Discovery Date
+                    Select columns to search
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg
-                        className="h-5 w-5 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                    </div>
-                    <input
-                      type="date"
-                      value={datasetOptions.searchByDate}
-                      onChange={(e) =>
-                        handleDatasetChange("searchByDate", e.target.value)
-                      }
-                      className="w-full bg-slate-700 border border-slate-600 rounded-lg pl-10 pr-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                    />
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={datasetOptions.filters.planetRadius}
+                        onChange={(e) =>
+                          handleFilterChange("planetRadius", e.target.checked)
+                        }
+                        className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500 focus:ring-2"
+                      />
+                      <span className="ml-2 text-sm bg-blue-600 px-3 py-1 rounded-full">
+                        Planet Radius
+                      </span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={datasetOptions.filters.discoveryYear}
+                        onChange={(e) =>
+                          handleFilterChange("discoveryYear", e.target.checked)
+                        }
+                        className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500 focus:ring-2"
+                      />
+                      <span className="ml-2 text-sm bg-slate-700 px-3 py-1 rounded-full">
+                        Discovery Year
+                      </span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={datasetOptions.filters.addFilter}
+                        onChange={(e) =>
+                          handleFilterChange("addFilter", e.target.checked)
+                        }
+                        className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500 focus:ring-2"
+                      />
+                      <span className="ml-2 text-sm text-blue-400">
+                        Add Filter
+                      </span>
+                    </label>
                   </div>
                 </div>
-              </div>
 
-              {/* Filter Options */}
-              <div className="mb-8">
-                <label className="block text-sm font-medium mb-3">
-                  Select columns to search
-                </label>
-                <div className="flex flex-wrap gap-4">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={datasetOptions.filters.planetRadius}
-                      onChange={(e) =>
-                        handleFilterChange("planetRadius", e.target.checked)
-                      }
-                      className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500 focus:ring-2"
-                    />
-                    <span className="ml-2 text-sm bg-blue-600 px-3 py-1 rounded-full">
-                      Planet Radius
-                    </span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={datasetOptions.filters.discoveryYear}
-                      onChange={(e) =>
-                        handleFilterChange("discoveryYear", e.target.checked)
-                      }
-                      className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500 focus:ring-2"
-                    />
-                    <span className="ml-2 text-sm bg-slate-700 px-3 py-1 rounded-full">
-                      Discovery Year
-                    </span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={datasetOptions.filters.addFilter}
-                      onChange={(e) =>
-                        handleFilterChange("addFilter", e.target.checked)
-                      }
-                      className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500 focus:ring-2"
-                    />
-                    <span className="ml-2 text-sm text-blue-400">
-                      Add Filter
-                    </span>
-                  </label>
+                {/* Analyze Button */}
+                <div className="text-center">
+                  <button
+                    onClick={handleAnalysis}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold transition-colors"
+                  >
+                    Analyze Data
+                  </button>
                 </div>
               </div>
-
-              {/* Analyze Button */}
-              <div className="text-center">
-                <button
-                  onClick={handleAnalysis}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold transition-colors"
-                >
-                  Analyze Data
-                </button>
-              </div>
-            </div>
+            </>
           )}
 
           {/* CSV File Upload Interface */}
           {selectedInputMethod === "csv" && (
-            <div className="bg-slate-800 border-2 border-dashed border-slate-600 rounded-lg p-12 text-center">
-              <div className="flex flex-col items-center">
-                <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mb-4">
-                  <svg
-                    className="w-8 h-8 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold mb-2">
-                  Upload a CSV file
-                </h3>
-                <p className="text-gray-400 mb-4">
-                  Drag and drop or click to upload.
+            <>
+              <div className="text-center mb-8">
+                <p className="text-gray-400 text-lg">
+                  Upload a CSV file containing desired data. Make sure the
+                  column names and row data types almost match with the standard
+                  datasets (KOI, TOI, etc). If that’s not the case, don’t worry,
+                  we will process your data but the accuracy may not be the true
+                  depiction of your original data. We will provide you another
+                  CSV file having the predictions.
                 </p>
-
-                <label className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg cursor-pointer transition-colors">
-                  Select File
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept=".csv,.txt"
-                    onChange={handleFileUpload}
-                  />
-                </label>
-
-                {selectedFile && (
-                  <div className="mt-4">
-                    <p className="text-green-400">
-                      Selected: {selectedFile.name}
-                    </p>
-                    <button
-                      onClick={handleAnalysis}
-                      className="mt-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors"
-                    >
-                      Start Analysis
-                    </button>
-                  </div>
-                )}
               </div>
-            </div>
+              <div className="bg-slate-800 border-2 border-dashed border-slate-600 rounded-lg p-12 text-center">
+                <div className="flex flex-col items-center">
+                  <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mb-4">
+                    <svg
+                      className="w-8 h-8 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">
+                    Upload a CSV file
+                  </h3>
+                  <p className="text-gray-400 mb-4">
+                    Drag and drop or click to upload.
+                  </p>
+
+                  <label className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg cursor-pointer transition-colors">
+                    Select File
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".csv,.txt"
+                      onChange={handleFileUpload}
+                    />
+                  </label>
+
+                  {selectedFile && (
+                    <div className="mt-4">
+                      <p className="text-green-400">
+                        Selected: {selectedFile.name}
+                      </p>
+                      <button
+                        onClick={handleAnalysis}
+                        className="mt-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors"
+                      >
+                        Start Analysis
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
           )}
 
           {/* Raw Light Curve Data Interface */}
           {selectedInputMethod === "raw" && (
-            <div className="bg-slate-800 rounded-lg p-12 text-center">
-              <h3 className="text-xl font-semibold mb-4">
-                Upload Raw Light Curve Data
-              </h3>
-              <p className="text-gray-400 mb-6">
-                Upload raw photometric data for analysis.
-              </p>
-              <label className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg cursor-pointer transition-colors">
-                Select Raw Data File
-                <input
-                  type="file"
-                  className="hidden"
-                  accept=".fits,.dat,.txt"
-                  onChange={handleFileUpload}
-                />
-              </label>
-            </div>
+            <>
+              <div className="text-center mb-8">
+                <p className="text-gray-400 text-lg">
+                  Upload CSV file containing transit light curve data (flux vs.
+                  time). We will say whether your object of interest is
+                  exoplanet or not from given data.
+                </p>
+              </div>
+              <div className="bg-slate-800 border-2 border-dashed border-slate-600 rounded-lg p-12 text-center">
+                <div className="flex flex-col items-center">
+                  <h3 className="text-xl font-semibold mb-4">
+                    Upload a CSV file
+                  </h3>
+                  <p className="text-gray-400 mb-4">
+                    or Drag and Drop the file here
+                  </p>
+                  <label className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg cursor-pointer transition-colors">
+                    Browse Files
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".csv"
+                      onChange={handleFileUpload}
+                    />
+                  </label>
+                  {selectedFile && (
+                    <div className="mt-4">
+                      <p className="text-green-400">
+                        Selected: {selectedFile.name}
+                      </p>
+                      <button
+                        onClick={handleAnalysis}
+                        className="mt-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors"
+                      >
+                        Start Analysis
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
           )}
         </div>
       </section>
