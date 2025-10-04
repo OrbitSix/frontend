@@ -1,13 +1,32 @@
+// Main landing page component with ML model interface for exoplanet detection
 import { useState } from "react";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 
+/**
+ * LandingPage Component
+ *
+ * This is the main landing page of the OrbitSix application that provides
+ * the primary interface for users to interact with the ML model for exoplanet detection.
+ *
+ * Features:
+ * - Hero section with call-to-action
+ * - Multiple data input methods (manual, CSV, dataset, raw light curve)
+ * - Interactive parameter controls for manual input
+ * - Analysis simulation with loading states
+ * - Results display with exoplanet detection information
+ * - Responsive design with modern UI
+ */
 const LandingPage = () => {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [selectedInputMethod, setSelectedInputMethod] = useState("manual");
+  // State management for file uploads and analysis
+  const [selectedFile, setSelectedFile] = useState(null); // Selected file for upload
+  const [isAnalyzing, setIsAnalyzing] = useState(false); // Loading state during analysis
+  const [showResults, setShowResults] = useState(false); // Controls results display
+  const [selectedInputMethod, setSelectedInputMethod] = useState("manual"); // Current input method
 
+  /**
+   * Scrolls to the data input section when "Try The Tool" button is clicked
+   */
   const scrollToSection = () => {
     const element = document.getElementById("data-input-menu");
     if (element) {
@@ -15,47 +34,59 @@ const LandingPage = () => {
     }
   };
 
+  // Manual data input state - Contains all planetary and stellar parameters
   const [manualData, setManualData] = useState({
     // Planetary and Orbital Parameters
-    k_ror: 0.05,
-    pl_prad_re: 2.0,
-    pl_orbper_days: 10.0,
-    pl_insol_flux: 100.0,
-    pl_depth_ppm: 1000.0,
-    pl_trandur_hrs: 3.0,
-    koi_impact: 0.5,
-    pl_tranmid_bjd: 2455000.0,
+    k_ror: 0.05, // Radius ratio (planet radius / star radius)
+    pl_prad_re: 2.0, // Planetary radius in Earth radii
+    pl_orbper_days: 10.0, // Orbital period in days
+    pl_insol_flux: 100.0, // Planetary insolation flux
+    pl_depth_ppm: 1000.0, // Transit depth in parts per million
+    pl_trandur_hrs: 3.0, // Transit duration in hours
+    koi_impact: 0.5, // Impact parameter
+    pl_tranmid_bjd: 2455000.0, // Planetary transit midpoint in BJD
     // Stellar Properties
-    st_teff_k: 5778.0,
-    st_rad_rsun: 1.0,
-    k_srho: 1.4,
-    st_mag_tess: 10.0,
+    st_teff_k: 5778.0, // Stellar effective temperature in Kelvin
+    st_rad_rsun: 1.0, // Stellar radius in solar radii
+    k_srho: 1.4, // Stellar density in g/cm³
+    st_mag_tess: 10.0, // Stellar magnitude in TESS band
     // Data Quality and Confidence
-    koi_model_snr: 20.0,
+    koi_model_snr: 20.0, // Model signal-to-noise ratio
   });
+
+  // Dataset selection state - For existing dataset analysis
   const [datasetOptions, setDatasetOptions] = useState({
-    selectedDataset: "kepler-11",
-    searchByName: "",
-    searchByDate: "",
+    selectedDataset: "kepler-11", // Currently selected dataset
+    searchByName: "", // Search term for planet name
+    searchByDate: "", // Search term for discovery date
     filters: {
-      planetRadius: true,
-      discoveryYear: false,
-      addFilter: false,
+      planetRadius: true, // Filter by planet radius
+      discoveryYear: false, // Filter by discovery year
+      addFilter: false, // Additional filter option
     },
   });
 
+  /**
+   * Handles file upload for CSV and raw light curve data
+   * @param {Event} event - File input change event
+   */
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     setSelectedFile(file);
   };
 
+  /**
+   * Handles the analysis process based on selected input method
+   * Prepares data for ML model and simulates analysis
+   */
   const handleAnalysis = () => {
+    // Validate file selection for CSV input method
     if (selectedInputMethod === "csv" && !selectedFile) return;
 
     setIsAnalyzing(true);
     setShowResults(false);
 
-    // Prepare data for ML model
+    // Prepare data for ML model based on input method
     const analysisData =
       selectedInputMethod === "manual"
         ? {
@@ -93,13 +124,18 @@ const LandingPage = () => {
 
     console.log("Data prepared for ML model:", analysisData);
 
-    // Simulate analysis process
+    // Simulate analysis process with timeout
     setTimeout(() => {
       setIsAnalyzing(false);
       setShowResults(true);
     }, 3000);
   };
 
+  /**
+   * Updates manual data parameters when user adjusts sliders or inputs
+   * @param {string} parameter - The parameter name to update
+   * @param {number} value - The new value for the parameter
+   */
   const handleManualDataChange = (parameter, value) => {
     setManualData((prev) => ({
       ...prev,
@@ -107,6 +143,11 @@ const LandingPage = () => {
     }));
   };
 
+  /**
+   * Updates dataset selection options
+   * @param {string} field - The field to update
+   * @param {any} value - The new value for the field
+   */
   const handleDatasetChange = (field, value) => {
     setDatasetOptions((prev) => ({
       ...prev,
@@ -114,6 +155,11 @@ const LandingPage = () => {
     }));
   };
 
+  /**
+   * Updates filter options for dataset selection
+   * @param {string} filterName - The filter name to update
+   * @param {boolean} checked - Whether the filter is enabled
+   */
   const handleFilterChange = (filterName, checked) => {
     setDatasetOptions((prev) => ({
       ...prev,
@@ -124,6 +170,7 @@ const LandingPage = () => {
     }));
   };
 
+  // Available datasets for selection
   const availableDatasets = [
     { value: "kepler-11", label: "Kepler-11 System" },
     { value: "kepler-186", label: "Kepler-186 System" },
@@ -134,7 +181,7 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white relative overflow-hidden">
-      {/* Background Planet */}
+      {/* Background decorative elements - Animated planet-like shapes */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-20 right-0 w-96 h-96 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 left-0 w-80 h-80 bg-gradient-to-tr from-green-400 to-blue-500 rounded-full blur-3xl"></div>
@@ -142,20 +189,25 @@ const LandingPage = () => {
 
       <Header />
 
-      {/* Hero Section */}
+      {/* Hero Section - Main call-to-action area */}
       <section className="relative pt-24 pb-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
+          {/* Main headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
             Use our Machine Learning model.
             <br />
             Predict <span className="text-blue-500">Exoplanet.</span>
           </h1>
+
+          {/* Description text */}
           <p className="text-lg md:text-xl text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed">
             Team OrbitSix is presenting you a Machine Learning model to check
             whether data lead us to Exoplanet or not. Here your data will speak
             louder than before. Choose what type of Input method you want to use
             and Get Started!
           </p>
+
+          {/* Call-to-action button */}
           <button
             onClick={scrollToSection}
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg transition-colors duration-200 font-semibold text-lg uppercase tracking-wide"
@@ -165,15 +217,17 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Data Input Section */}
+      {/* Data Input Section - Main interface for data input methods */}
       <section id="data-input-menu" className="relative py-16 px-6">
         <div className="max-w-6xl mx-auto">
+          {/* Section title */}
           <h2 className="text-3xl font-bold text-center mb-12">
             How would you like to input your data?
           </h2>
 
-          {/* Input Options */}
+          {/* Input method selection cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+            {/* Manual Data Input Card */}
             <div
               onClick={() => setSelectedInputMethod("manual")}
               className={`bg-slate-800 border-2 rounded-lg p-6 hover:border-blue-500 transition-colors cursor-pointer ${
@@ -192,6 +246,7 @@ const LandingPage = () => {
               <p className="text-gray-400 text-sm">Enter data manually.</p>
             </div>
 
+            {/* CSV File Upload Card */}
             <div
               onClick={() => setSelectedInputMethod("csv")}
               className={`bg-slate-800 border-2 rounded-lg p-6 hover:border-blue-500 transition-colors cursor-pointer ${
@@ -210,6 +265,7 @@ const LandingPage = () => {
               <p className="text-gray-400 text-sm">Upload a CSV file.</p>
             </div>
 
+            {/* Existing Dataset Card */}
             <div
               onClick={() => setSelectedInputMethod("dataset")}
               className={`bg-slate-800 border-2 rounded-lg p-6 hover:border-blue-500 transition-colors cursor-pointer ${
@@ -228,6 +284,7 @@ const LandingPage = () => {
               <p className="text-gray-400 text-sm">Select from presets.</p>
             </div>
 
+            {/* Raw Light Curve Data Card */}
             <div
               onClick={() => setSelectedInputMethod("raw")}
               className={`bg-slate-800 border-2 rounded-lg p-6 hover:border-blue-500 transition-colors cursor-pointer ${
@@ -249,9 +306,10 @@ const LandingPage = () => {
             </div>
           </div>
 
-          {/* Manual Data Input Interface */}
+          {/* Manual Data Input Interface - Interactive parameter controls */}
           {selectedInputMethod === "manual" && (
             <>
+              {/* Instructions for manual input */}
               <div className="text-center mb-8">
                 <p className="text-gray-400 text-lg">
                   Use range sliders or input fields to provide values for each
@@ -260,8 +318,10 @@ const LandingPage = () => {
                   your observational data.
                 </p>
               </div>
+
+              {/* Manual input form container */}
               <div className="bg-slate-800 rounded-lg p-8">
-                {/* Planetary and Orbital Parameters */}
+                {/* Planetary and Orbital Parameters Section */}
                 <div className="mb-10">
                   <h3 className="text-xl font-bold text-blue-400 mb-6 border-b border-slate-700 pb-2">
                     Planetary and Orbital Parameters
@@ -509,7 +569,7 @@ const LandingPage = () => {
                   </div>
                 </div>
 
-                {/* Stellar Properties */}
+                {/* Stellar Properties Section */}
                 <div className="mb-10">
                   <h3 className="text-xl font-bold text-purple-400 mb-6 border-b border-slate-700 pb-2">
                     Stellar Properties
@@ -637,7 +697,7 @@ const LandingPage = () => {
                   </div>
                 </div>
 
-                {/* Data Quality and Confidence */}
+                {/* Data Quality and Confidence Section */}
                 <div className="mb-8">
                   <h3 className="text-xl font-bold text-green-400 mb-6 border-b border-slate-700 pb-2">
                     Data Quality and Confidence
@@ -960,7 +1020,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Results Section */}
+      {/* Results Section - Displays analysis results and loading states */}
       {(isAnalyzing || showResults) && (
         <section className="relative py-16 px-6">
           <div className="max-w-4xl mx-auto">

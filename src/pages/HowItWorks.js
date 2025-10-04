@@ -1,16 +1,35 @@
+// How It Works page component explaining the technical methodology of OrbitSix
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 
+/**
+ * HowItWorks Component
+ *
+ * This component provides a detailed technical explanation of how the OrbitSix
+ * machine learning model works for exoplanet detection. It covers the entire
+ * pipeline from data preprocessing to final predictions.
+ *
+ * Features:
+ * - Comprehensive explanation of the ML methodology
+ * - Technical details about the stacked ensemble architecture
+ * - Performance metrics and results
+ * - Model optimization approaches
+ * - Explainability features
+ */
 const HowItWorks = () => {
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       <Header />
 
+      {/* Main content section */}
       <div className="pt-32 pb-20 px-6">
         <div className="max-w-4xl mx-auto">
+          {/* Page title */}
           <h1 className="text-4xl font-bold mb-10 text-center">How It Works</h1>
+
+          {/* Technical explanation sections */}
           <div className="space-y-10">
-            {/* Section 1: Overview */}
+            {/* Section 1: Overview - Introduction to the ML approach */}
             <section className="bg-slate-800 rounded-lg p-8">
               <p className="text-lg text-gray-200 mb-4">
                 Our solution addresses the challenge of manually identifying
@@ -24,7 +43,7 @@ const HowItWorks = () => {
               </p>
             </section>
 
-            {/* Section 2: Data Foundation and Pre-processing */}
+            {/* Section 2: Data Foundation and Pre-processing - Data preparation methodology */}
             <section className="bg-slate-800 rounded-lg p-8">
               <h2 className="text-2xl font-semibold mb-4">
                 1. Data Foundation and Pre-processing
@@ -94,7 +113,7 @@ const HowItWorks = () => {
               </p>
             </section>
 
-            {/* Section 3: Stacked Ensemble Architecture */}
+            {/* Section 3: Stacked Ensemble Architecture - Core ML model structure */}
             <section className="bg-slate-800 rounded-lg p-8">
               <h2 className="text-2xl font-semibold mb-4">
                 2. The Stacked Ensemble Architecture
@@ -201,7 +220,7 @@ const HowItWorks = () => {
               </p>
             </section>
 
-            {/* Section 4: Performance Metrics and Results */}
+            {/* Section 4: Performance Metrics and Results - Model evaluation and performance */}
             <section className="bg-slate-800 rounded-lg p-8">
               <h2 className="text-2xl font-semibold mb-4">
                 3. Performance Metrics and Results
@@ -335,7 +354,7 @@ const HowItWorks = () => {
               </p>
             </section>
 
-            {/* Section 5: Model Optimization and Approach */}
+            {/* Section 5: Model Optimization and Approach - Development methodology and iterations */}
             <section className="bg-slate-800 rounded-lg p-8">
               <h2 className="text-2xl font-semibold mb-4">
                 4. Model Optimization and Approach
@@ -422,7 +441,7 @@ const HowItWorks = () => {
               </p>
             </section>
 
-            {/* Section 6: Explainability and User Insight (LLM Layer) */}
+            {/* Section 6: Explainability and User Insight (LLM Layer) - AI explanation system */}
             <section className="bg-slate-800 rounded-lg p-8">
               <h2 className="text-2xl font-semibold mb-4">
                 5. Explainability and User Insight (The LLM Layer)
@@ -478,7 +497,7 @@ const HowItWorks = () => {
               </p>
             </section>
 
-            {/* Section 7: Summary of Key Benefits */}
+            {/* Section 7: Summary of Key Benefits - Final summary of advantages */}
             <section className="bg-slate-800 rounded-lg p-8">
               <h2 className="text-2xl font-semibold mb-4">
                 6. Summary of Key Benefits

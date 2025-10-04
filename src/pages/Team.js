@@ -1,7 +1,20 @@
+// Team page component displaying information about the OrbitSix development team
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 
+/**
+ * Team Component
+ *
+ * This component displays information about the OrbitSix development team.
+ * It shows team members with their roles and brief descriptions of their contributions.
+ *
+ * Features:
+ * - Responsive grid layout for team member cards
+ * - Individual team member information (name, role, bio)
+ * - Consistent styling with the rest of the application
+ */
 const Team = () => {
+  // Array containing team member information
   const teamMembers = [
     {
       name: "Abrar",
@@ -39,14 +52,17 @@ const Team = () => {
     <div className="min-h-screen bg-slate-900 text-white">
       <Header />
 
+      {/* Main content section */}
       <div className="pt-32 pb-20 px-6">
         <div className="max-w-6xl mx-auto">
+          {/* Page title and description */}
           <h1 className="text-4xl font-bold mb-8 text-center">Our Team</h1>
           <p className="text-xl text-gray-300 text-center mb-12 max-w-3xl mx-auto">
             Meet the passionate team of scientists, engineers, and developers
             behind OrbitSix.
           </p>
 
+          {/* Team members grid - Responsive layout */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {teamMembers.map((member, index) => (
               <div
