@@ -9,7 +9,7 @@ import { Link, useNavigate } from "react-router-dom";
  *
  * Features:
  * - Responsive logo that links to home page
- * - Navigation buttons for Home, How it Works, Team, and Tutorial pages
+ * - Navigation buttons for Home, How it Works, and Team pages
  * - Hover effects and smooth transitions
  * - Fixed positioning with high z-index to stay on top
  */
@@ -26,7 +26,7 @@ function Header() {
           className="flex items-center hover:opacity-80 transition-opacity"
         >
           <img
-            src="/images/Bare Logo SVG.png"
+            src="/images/logo.png"
             alt="OrbitSix"
             className="h-12 md:h-16 w-auto object-contain"
           />

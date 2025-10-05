@@ -16,7 +16,7 @@ import Tutorial from "./pages/Tutorial";
  * - "/" - Landing page with ML model interface
  * - "/how-it-works" - Technical explanation of the ML approach
  * - "/team" - Team members information
- * - "/tutorial" - Comprehensive user guide and tutorial
+ * - "/analysis" - Dedicated analysis tool page
  */
 function App() {
   return (
