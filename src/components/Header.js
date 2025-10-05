@@ -9,7 +9,7 @@ import { Link, useNavigate } from "react-router-dom";
  *
  * Features:
  * - Responsive logo that links to home page
- * - Navigation buttons for Home, How it Works, and Team pages
+ * - Navigation buttons for Home, How it Works, Team, and Tutorial pages
  * - Hover effects and smooth transitions
  * - Fixed positioning with high z-index to stay on top
  */
@@ -56,6 +56,14 @@ function Header() {
             className="hover:text-blue-400 transition-colors duration-200"
           >
             Team
+          </button>
+
+          {/* Tutorial button - Navigate to tutorial page */}
+          <button
+            onClick={() => navigate("/tutorial")}
+            className="hover:text-blue-400 transition-colors duration-200"
+          >
+            Tutorial
           </button>
         </nav>
       </div>

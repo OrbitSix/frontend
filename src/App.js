@@ -4,6 +4,7 @@ import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import HowItWorks from "./pages/HowItWorks";
 import LandingPage from "./pages/LandingPage";
 import Team from "./pages/Team";
+import Tutorial from "./pages/Tutorial";
 
 /**
  * App Component
@@ -15,7 +16,7 @@ import Team from "./pages/Team";
  * - "/" - Landing page with ML model interface
  * - "/how-it-works" - Technical explanation of the ML approach
  * - "/team" - Team members information
- * - "/analysis" - Dedicated analysis tool page
+ * - "/tutorial" - Comprehensive user guide and tutorial
  */
 function App() {
   return (
@@ -30,6 +31,9 @@ function App() {
 
           {/* Team page - Information about the development team */}
           <Route path="/team" element={<Team />} />
+
+          {/* Tutorial page - Comprehensive user guide */}
+          <Route path="/tutorial" element={<Tutorial />} />
         </Routes>
       </div>
     </Router>
