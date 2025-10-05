@@ -23,18 +23,18 @@ const Team = () => {
     },
     {
       name: "Afeef",
-      role: "Data Analyst",
+      role: "Data Analyst and Writer",
       bio: "Expert in data preprocessing, cleaning, and extracting insights from astronomical datasets.",
     },
     {
       name: "Farabi",
-      role: "Data Analyst",
+      role: "Data Analyst and Writer",
       bio: "Focuses on data analysis and validation to ensure accuracy in exoplanet discoveries.",
     },
     {
       name: "Arik",
-      role: "Full-stack Developer",
-      bio: "Develops and maintains the backend and frontend systems for OrbitSix.",
+      role: "Backend Developer",
+      bio: "Develops and maintains the backend systems for OrbitSix.",
     },
     {
       name: "Antor",
