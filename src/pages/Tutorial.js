@@ -333,7 +333,7 @@ const Tutorial = () => {
                     <h3 className="text-xl font-bold mb-4 text-green-400">
                       Available Datasets:
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                       <div className="bg-slate-800 rounded p-4">
                         <h4 className="font-bold text-blue-400 mb-2">Kepler</h4>
                         <p className="text-sm">
