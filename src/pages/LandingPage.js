@@ -1,5 +1,6 @@
 // Main landing page component with ML model interface for exoplanet detection
-import { useState } from "react";
+import { marked } from "marked";
+import { useRef, useState } from "react";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import LightCurveChart from "../components/LightCurveChart";
@@ -8,8 +9,22 @@ import {
   fetchReason,
   lightcurveImageUrl,
   manualPredict,
+  uploadCSV,
   uploadRaw,
 } from "../services/api";
+
+// Configure marked for better formatting
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
+
+/**
+ * Format text to HTML using marked
+ */
+function formatTextToHTML(text) {
+  return marked.parse(text);
+}
 
 /**
  * LandingPage Component
@@ -32,6 +47,7 @@ const LandingPage = () => {
   const [showResults, setShowResults] = useState(false); // Controls results display
   const [selectedInputMethod, setSelectedInputMethod] = useState("manual"); // Current input method
   const [showReasoning, setShowReasoning] = useState(false); // State for showing/hiding reasoning section
+  const [isLoadingReasoning, setIsLoadingReasoning] = useState(false); // Loading state for reasoning
   const [lightCurveData, setLightCurveData] = useState([]); // Mock or backend-provided light curve
   const [predictionId, setPredictionId] = useState(null);
   const [predictionVerdict, setPredictionVerdict] = useState(null);
@@ -39,6 +55,14 @@ const LandingPage = () => {
   const [predictionError, setPredictionError] = useState("");
   const [reasonText, setReasonText] = useState("");
   const [lightcurveUrl, setLightcurveUrl] = useState("");
+  const [csvDragging, setCsvDragging] = useState(false);
+  const [rawDragging, setRawDragging] = useState(false);
+  const [resetNotice, setResetNotice] = useState("");
+  const [confirmSwitchOpen, setConfirmSwitchOpen] = useState(false);
+  const [pendingMethod, setPendingMethod] = useState(null);
+
+  // Ref to track active reasoning request cancellation
+  const reasoningAbortController = useRef(null);
 
   /**
    * Scrolls to the data input section when "Try The Tool" button is clicked
@@ -47,6 +71,79 @@ const LandingPage = () => {
     const element = document.getElementById("data-input-menu");
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  /**
+   * Automatically fetch reasoning for a prediction with polling
+   * Can be cancelled if a new analysis starts
+   */
+  const fetchReasoningAutomatically = async (predId) => {
+    // Cancel any existing reasoning request
+    if (reasoningAbortController.current) {
+      reasoningAbortController.current.cancelled = true;
+    }
+
+    // Create new abort controller for this request
+    const controller = { cancelled: false };
+    reasoningAbortController.current = controller;
+
+    setIsLoadingReasoning(true);
+    setShowReasoning(true);
+    setReasonText("");
+
+    const maxAttempts = 60; // Poll for up to 60 attempts (5 minutes with 5s interval)
+    const pollInterval = 5000; // 5 seconds
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      // Check if this request was cancelled
+      if (controller.cancelled) {
+        console.log("Reasoning request cancelled");
+        return;
+      }
+
+      try {
+        const r = await fetchReason(predId);
+        console.log(`Reasoning poll attempt ${attempt + 1}:`);
+
+        if (r.reason) {
+          // Check again before setting state (in case cancelled during fetch)
+          if (!controller.cancelled) {
+            setReasonText(r.reason);
+            setIsLoadingReasoning(false);
+          }
+          return; // Stop polling once we get the reasoning
+        }
+
+        // Wait before next attempt
+        if (attempt < maxAttempts - 1) {
+          await new Promise((resolve) => setTimeout(resolve, pollInterval));
+        }
+      } catch (e) {
+        console.error("Error fetching reasoning:", e);
+
+        // If we've tried multiple times and still failing, show error
+        if (attempt >= 2) {
+          if (!controller.cancelled) {
+            setReasonText("Could not fetch reasoning.");
+            setIsLoadingReasoning(false);
+          }
+          return;
+        }
+
+        // Wait before retry
+        if (attempt < maxAttempts - 1) {
+          await new Promise((resolve) => setTimeout(resolve, pollInterval));
+        }
+      }
+    }
+
+    // Max attempts reached
+    if (!controller.cancelled) {
+      setReasonText(
+        "Could not fetch reasoning. The reasoning is taking longer than expected."
+      );
+      setIsLoadingReasoning(false);
     }
   };
 
@@ -87,8 +184,90 @@ const LandingPage = () => {
    * @param {Event} event - File input change event
    */
   const handleFileUpload = (event) => {
-    const file = event.target.files[0];
+    const file = event?.target?.files?.[0];
+    if (!file) return;
     setSelectedFile(file);
+  };
+
+  const setFileFromDrop = (file, mode) => {
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    if (mode === "csv") {
+      if (!(name.endsWith(".csv") || name.endsWith(".txt"))) {
+        setPredictionError("Please drop a CSV (.csv/.txt) file");
+        return;
+      }
+    }
+    if (mode === "raw") {
+      if (
+        !(
+          name.endsWith(".fits") ||
+          name.endsWith(".fit") ||
+          name.endsWith(".fz")
+        )
+      ) {
+        setPredictionError("Please drop a FITS file (.fits/.fit/.fz)");
+        return;
+      }
+    }
+    setPredictionError("");
+    setSelectedFile(file);
+  };
+
+  const actuallyChangeInputMethod = (method) => {
+    // Cancel any pending reasoning request
+    if (reasoningAbortController.current) {
+      reasoningAbortController.current.cancelled = true;
+      reasoningAbortController.current = null;
+    }
+
+    // reset previous results/state when switching input methods
+    if (
+      showResults ||
+      predictionId ||
+      predictionVerdict ||
+      lightcurveUrl ||
+      predictionError ||
+      (Array.isArray(lightCurveData) && lightCurveData.length > 0)
+    ) {
+      setResetNotice(
+        "Previous results have been cleared after switching input method."
+      );
+      window.clearTimeout(actuallyChangeInputMethod.__t);
+      actuallyChangeInputMethod.__t = window.setTimeout(
+        () => setResetNotice(""),
+        4000
+      );
+    }
+    setSelectedInputMethod(method);
+    setSelectedFile(null);
+    setIsAnalyzing(false);
+    setShowResults(false);
+    setLightCurveData([]);
+    setPredictionError("");
+    setPredictionId(null);
+    setPredictionVerdict(null);
+    setPredictionScore(null);
+    setReasonText("");
+    setLightcurveUrl("");
+    setIsLoadingReasoning(false);
+    setShowReasoning(false);
+  };
+
+  const requestChangeInputMethod = (method) => {
+    const hasResults =
+      showResults ||
+      predictionId ||
+      predictionVerdict ||
+      lightcurveUrl ||
+      predictionError ||
+      (Array.isArray(lightCurveData) && lightCurveData.length > 0);
+    if (hasResults) {
+      setPendingMethod(method);
+      setConfirmSwitchOpen(true);
+      return;
+    }
+    actuallyChangeInputMethod(method);
   };
 
   /**
@@ -99,6 +278,12 @@ const LandingPage = () => {
     // Validate file selection for CSV input method
     if (selectedInputMethod === "csv" && !selectedFile) return;
 
+    // Cancel any pending reasoning request from previous analysis
+    if (reasoningAbortController.current) {
+      reasoningAbortController.current.cancelled = true;
+      reasoningAbortController.current = null;
+    }
+
     setIsAnalyzing(true);
     setShowResults(false);
     setLightCurveData([]);
@@ -108,6 +293,8 @@ const LandingPage = () => {
     setPredictionScore(null);
     setReasonText("");
     setLightcurveUrl("");
+    setIsLoadingReasoning(false);
+    setShowReasoning(false);
 
     // Prepare data for ML model based on input method
     const analysisData =
@@ -220,9 +407,46 @@ const LandingPage = () => {
         setPredictionId(res.id || null);
         setPredictionVerdict(res.verdict || null);
         setPredictionScore(typeof res.score === "number" ? res.score : null);
+
+        console.log(predictionId);
+
+        // Automatically fetch reasoning if prediction ID is available
+        if (res.id) {
+          fetchReasoningAutomatically(res.id);
+        }
+      } else if (selectedInputMethod === "csv") {
+        if (!selectedFile) {
+          throw new Error("Please select a file to upload");
+        }
+        const name = selectedFile.name.toLowerCase();
+        const isCsv = name.endsWith(".csv") || name.endsWith(".txt");
+        if (!isCsv) {
+          throw new Error("Please upload a CSV file (.csv/.txt)");
+        }
+        const res = await uploadCSV(selectedFile);
+        if (res.res) {
+          const totalExoplanets = res.res.filter(
+            (v) => v === "Exoplanet"
+          ).length;
+          const totalCandidates = res.res.length;
+          setPredictionVerdict(
+            `Found ${totalExoplanets} potential exoplanets out of ${totalCandidates} candidates`
+          );
+          setPredictionScore(totalExoplanets / totalCandidates);
+        }
       } else if (selectedInputMethod === "raw") {
         if (!selectedFile) {
           throw new Error("Please select a file to upload");
+        }
+        const name = selectedFile.name.toLowerCase();
+        const isFits =
+          name.endsWith(".fits") ||
+          name.endsWith(".fit") ||
+          name.endsWith(".fz");
+        if (!isFits) {
+          throw new Error(
+            "Please upload a FITS light curve file (.fits/.fit/.fz)"
+          );
         }
         const res = await uploadRaw(selectedFile);
         setPredictionId(res.id || null);
@@ -230,8 +454,11 @@ const LandingPage = () => {
         setPredictionScore(typeof res.score === "number" ? res.score : null);
         if (res.id) {
           setLightcurveUrl(lightcurveImageUrl(res.id));
+          // Automatically fetch reasoning
+          fetchReasoningAutomatically(res.id);
         }
       }
+
       setShowResults(true);
       setShowReasoning(false);
     } catch (err) {
@@ -300,6 +527,56 @@ const LandingPage = () => {
 
       <Header />
 
+      {confirmSwitchOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setConfirmSwitchOpen(false)}
+          />
+          <div className="relative bg-slate-800 border border-slate-700 rounded-lg w-full max-w-md mx-auto p-6 shadow-xl">
+            <h3 className="text-lg font-semibold mb-2">Switch input method?</h3>
+            <p className="text-sm text-gray-300 mb-6">
+              Switching input method will clear the previous results. Continue?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setConfirmSwitchOpen(false);
+                }}
+                className="px-4 py-2 rounded bg-slate-700 hover:bg-slate-600 text-white"
+              >
+                No
+              </button>
+              <button
+                onClick={() => {
+                  const target = pendingMethod;
+                  setConfirmSwitchOpen(false);
+                  setPendingMethod(null);
+                  if (target) {
+                    actuallyChangeInputMethod(target);
+                  }
+                }}
+                className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Yes, switch
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {resetNotice && (
+        <div
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-50"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="shadow-lg bg-amber-100/95 text-amber-900 border border-amber-300 rounded-md px-5 py-3 text-sm">
+            {resetNotice}
+          </div>
+        </div>
+      )}
+
       {/* Hero Section - Main call-to-action area */}
       <section className="relative pt-24 pb-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
@@ -340,7 +617,7 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
             {/* Manual Data Input Card */}
             <div
-              onClick={() => setSelectedInputMethod("manual")}
+              onClick={() => requestChangeInputMethod("manual")}
               className={`bg-slate-800 border-2 rounded-lg p-6 hover:border-blue-500 transition-colors cursor-pointer ${
                 selectedInputMethod === "manual"
                   ? "border-blue-500"
@@ -359,7 +636,7 @@ const LandingPage = () => {
 
             {/* CSV File Upload Card */}
             <div
-              onClick={() => setSelectedInputMethod("csv")}
+              onClick={() => requestChangeInputMethod("csv")}
               className={`bg-slate-800 border-2 rounded-lg p-6 hover:border-blue-500 transition-colors cursor-pointer ${
                 selectedInputMethod === "csv"
                   ? "border-blue-500"
@@ -378,7 +655,7 @@ const LandingPage = () => {
 
             {/* Existing Dataset Card */}
             <div
-              onClick={() => setSelectedInputMethod("dataset")}
+              onClick={() => requestChangeInputMethod("dataset")}
               className={`bg-slate-800 border-2 rounded-lg p-6 hover:border-blue-500 transition-colors cursor-pointer ${
                 selectedInputMethod === "dataset"
                   ? "border-blue-500"
@@ -397,7 +674,7 @@ const LandingPage = () => {
 
             {/* Raw Light Curve Data Card */}
             <div
-              onClick={() => setSelectedInputMethod("raw")}
+              onClick={() => requestChangeInputMethod("raw")}
               className={`bg-slate-800 border-2 rounded-lg p-6 hover:border-blue-500 transition-colors cursor-pointer ${
                 selectedInputMethod === "raw"
                   ? "border-blue-500"
@@ -1032,7 +1309,35 @@ const LandingPage = () => {
                   CSV file having the predictions.
                 </p>
               </div>
-              <div className="bg-slate-800 border-2 border-dashed border-slate-600 rounded-lg p-12 text-center">
+              <div
+                className={`bg-slate-800 rounded-lg p-12 text-center border-2 border-dashed ${
+                  csvDragging
+                    ? "border-blue-500 bg-slate-800/70"
+                    : "border-slate-600"
+                }`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCsvDragging(true);
+                }}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCsvDragging(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCsvDragging(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCsvDragging(false);
+                  const file = e.dataTransfer?.files?.[0];
+                  setFileFromDrop(file, "csv");
+                }}
+              >
                 <div className="flex flex-col items-center">
                   <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mb-4">
                     <svg
@@ -1089,15 +1394,43 @@ const LandingPage = () => {
             <>
               <div className="text-center mb-8">
                 <p className="text-gray-400 text-lg">
-                  Upload CSV file containing transit light curve data (flux vs.
-                  time). We will say whether your object of interest is
-                  exoplanet or not from given data.
+                  Upload a FITS light curve file from Kepler, K2, or TESS. We
+                  will analyze it and tell you whether the object of interest is
+                  an exoplanet.
                 </p>
               </div>
-              <div className="bg-slate-800 border-2 border-dashed border-slate-600 rounded-lg p-12 text-center">
+              <div
+                className={`bg-slate-800 rounded-lg p-12 text-center border-2 border-dashed ${
+                  rawDragging
+                    ? "border-blue-500 bg-slate-800/70"
+                    : "border-slate-600"
+                }`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setRawDragging(true);
+                }}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setRawDragging(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setRawDragging(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setRawDragging(false);
+                  const file = e.dataTransfer?.files?.[0];
+                  setFileFromDrop(file, "raw");
+                }}
+              >
                 <div className="flex flex-col items-center">
                   <h3 className="text-xl font-semibold mb-4">
-                    Upload a CSV file
+                    Upload a FITS file
                   </h3>
                   <p className="text-gray-400 mb-4">
                     or Drag and Drop the file here
@@ -1107,7 +1440,7 @@ const LandingPage = () => {
                     <input
                       type="file"
                       className="hidden"
-                      accept=".csv"
+                      accept=".fits,.fit,.fz,application/fits,image/fits"
                       onChange={handleFileUpload}
                     />
                   </label>
@@ -1172,17 +1505,9 @@ const LandingPage = () => {
                     </p>
                   </div>
                   <button
-                    onClick={async () => {
-                      const next = !showReasoning;
-                      setShowReasoning(next);
-                      if (next && predictionId && !reasonText) {
-                        try {
-                          const r = await fetchReason(predictionId);
-                          setReasonText(r?.reason || "");
-                        } catch (e) {
-                          setReasonText("Could not fetch reasoning.");
-                        }
-                      }
+                    onClick={() => {
+                      // Simply toggle the reasoning visibility
+                      setShowReasoning(!showReasoning);
                     }}
                     className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
                       showReasoning
@@ -1256,13 +1581,67 @@ const LandingPage = () => {
                       This is purely AI-assisted reasoning. So you shouldn't
                       expect the reasoning as flawless.
                     </p>
-                    {predictionId && reasonText && (
-                      <div className="mb-6 text-gray-300 whitespace-pre-line">
-                        {reasonText}
+
+                    {/* Loading state */}
+                    {isLoadingReasoning && (
+                      <div className="flex flex-col items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+                        <p className="text-gray-300">
+                          Reasoning is getting ready, please wait...
+                        </p>
                       </div>
                     )}
 
-                    {!reasonText && (
+                    {/* Show reasoning when available */}
+                    {!isLoadingReasoning &&
+                      predictionId &&
+                      reasonText &&
+                      reasonText !== "Could not fetch reasoning." &&
+                      !reasonText.startsWith("Could not fetch reasoning.") && (
+                        <div
+                          className="mb-6 text-gray-300 reasoning-content prose prose-invert max-w-none"
+                          style={{
+                            "--tw-prose-headings": "#e5e7eb",
+                            "--tw-prose-body": "#d1d5db",
+                          }}
+                          dangerouslySetInnerHTML={{
+                            __html: formatTextToHTML(reasonText),
+                          }}
+                        />
+                      )}
+
+                    {/* Show error message */}
+                    {!isLoadingReasoning &&
+                      (reasonText === "Could not fetch reasoning." ||
+                        reasonText?.startsWith(
+                          "Could not fetch reasoning."
+                        )) && (
+                        <div className="bg-red-900/20 border border-red-600/50 rounded-lg p-6 mb-6">
+                          <div className="flex items-start">
+                            <svg
+                              className="w-6 h-6 text-red-500 mr-3 flex-shrink-0 mt-1"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <div>
+                              <h4 className="text-red-400 font-semibold mb-2">
+                                Error Loading Reasoning
+                              </h4>
+                              <p className="text-gray-300">{reasonText}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                    {!isLoadingReasoning && !reasonText && (
                       <div className="space-y-6 text-gray-300">
                         {/* Ideal Planetary Parameters */}
                         <div>
