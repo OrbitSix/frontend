@@ -1,5 +1,4 @@
 // Lightweight API client for backend connectivity
-// If REACT_APP_API_BASE_URL is not set, use relative URLs and rely on CRA proxy in development.
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 export function getApiBaseUrl() {
@@ -7,9 +6,7 @@ export function getApiBaseUrl() {
 }
 
 export async function manualPredict(payload) {
-  const url = API_BASE_URL
-    ? `${API_BASE_URL}/manual-predict`
-    : "/manual-predict";
+  const url = `${API_BASE_URL}/manual-predict`;
   const res = await fetch(url, {
     method: "POST",
     headers: {
@@ -57,7 +54,7 @@ export async function deleteLightcurve(id) {
 export async function uploadCSV(file) {
   const form = new FormData();
   form.append("file", file);
-  const url = API_BASE_URL ? `${API_BASE_URL}/predict-csv` : "/predict-csv";
+  const url = `${API_BASE_URL}/predict-csv`;
   const res = await fetch(url, {
     method: "POST",
     body: form,
@@ -69,16 +66,39 @@ export async function uploadCSV(file) {
 export const getReasoning = async (predictionId) => {
   try {
     const response = await fetch(`${API_BASE_URL}/reason?id=${predictionId}`);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const data = await response.json();
     console.log("reasoning:", data.reason);
     return data.reason;
   } catch (error) {
-    console.error('Error fetching reasoning:', error);
+    console.error("Error fetching reasoning:", error);
     return null;
   }
 };
+
+export async function getNameSuggestion(mission, nameQuery) {
+  const url = `${API_BASE_URL}/name-suggestion?mission=${encodeURIComponent(
+    mission
+  )}&name_query=${encodeURIComponent(nameQuery)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`name-suggestion failed: ${res.status}`);
+  return res.json();
+}
+
+export async function getDatasetPrediction(mission, nameQuery) {
+  const url = `${API_BASE_URL}/dataset-prediction?mission=${encodeURIComponent(
+    mission
+  )}&name_query=${encodeURIComponent(nameQuery)}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error("Planet data not found");
+    }
+    throw new Error(`dataset-prediction failed: ${res.status}`);
+  }
+  return res.json();
+}
